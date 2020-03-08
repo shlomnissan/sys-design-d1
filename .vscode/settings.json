@@ -2,7 +2,8 @@
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
     "files.associations": {
         "iostream": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "cpp_redis": "cpp"
     },
     "fileHeaderComment.parameter":{
         "*":{

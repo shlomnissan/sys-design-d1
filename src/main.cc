@@ -5,6 +5,7 @@
 
 #include <cpprest/http_listener.h>
 #include <cpprest/json.h>
+#include <cpp_redis/cpp_redis>
 
 #include <iostream>
 #include <string>
@@ -29,7 +30,22 @@ void SendResponse(unsigned status_code,
     request.reply(status_code, response);
 }
 
+void SendResponse(unsigned status_code,
+                  const http::http_request& request,
+                  const json::value& response) {
+    request.reply(status_code, response);
+}
+
 int main(int argc, char* argv[]) {
+    cpp_redis::client client;
+    client.connect("redis", 6379, [](const std::string &host,
+                                     std::size_t port,
+                                     cpp_redis::connect_state status) {
+        if (status == cpp_redis::connect_state::ok) {
+            std::cout << "Redis server connected\n";
+        }
+    });
+
     gflags::SetUsageMessage("rest -port <PORT> -host <HOST>");
     gflags::SetVersionString("1.0.0");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -46,19 +62,27 @@ int main(int argc, char* argv[]) {
 
     // handle GET request
     listener.support(http::methods::GET,
-        [](const http::http_request& request){
-        SendResponse(http::status_codes::OK, request, "Success", false);
+        [&client](const http::http_request& request){
+            client.get("name", [&](const cpp_redis::reply& reply){
+                auto response = json::value::object();
+                response["error"] = json::value::boolean(false);
+                response["name"] = json::value::string(reply.as_string());
+                SendResponse(http::status_codes::OK, request, response);
+            });
+            client.sync_commit();
     });
 
     // handle POST request
     listener.support(http::methods::POST,
-        [](const http::http_request& request) {
-        request.extract_json().then([&request](json::value data){
+        [&client](const http::http_request& request) {
+        request.extract_json().then([&client, &request](json::value data){
             try {
                 auto key = data.at("key").as_string();
                 auto value = data.at("value").as_string();
-                std::cout << "Key: " << key << " "
-                          << "Value: " << value << '\n';
+
+                client.set(key, value);
+                client.sync_commit();
+
                 SendResponse(http::status_codes::OK,
                              request, "Success", false);
             } catch(const json::json_exception& e) {

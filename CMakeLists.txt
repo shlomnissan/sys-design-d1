@@ -25,4 +25,4 @@ set(SOURCE "src/main.cc")
 
 add_executable(${CMAKE_PROJECT_NAME} ${HEADER} ${SOURCE})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} cpprest gflags)
+target_link_libraries(${CMAKE_PROJECT_NAME} cpprest gflags cpp_redis)

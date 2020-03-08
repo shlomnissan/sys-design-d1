@@ -7,3 +7,6 @@
 [submodule "external/gflags"]
 	path = external/gflags
 	url = https://github.com/gflags/gflags
+[submodule "external/cpp_redis"]
+	path = external/cpp_redis
+	url = https://github.com/cpp-redis/cpp_redis.git
